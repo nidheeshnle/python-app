@@ -1,4 +1,4 @@
-name: SSH Test - ls command
+name: SSH Test Workflow
 
 on:
   push:
@@ -14,9 +14,8 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa  
+          chmod 600 ~/.ssh/id_rsa
 
-    steps:
       - name: SSH into VM and run ls
         uses: appleboy/ssh-action@v1.0.0
         with:
