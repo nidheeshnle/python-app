@@ -1,4 +1,4 @@
-name: Deploy Web App via SSH
+name: Build and Push Docker Image
 
 on:
   push:
@@ -6,47 +6,22 @@ on:
       - main
 
 jobs:
-  deploy:
+  docker:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Create SSH key
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login \
+            -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: Deploy application on VM
+      - name: Build Docker image
         run: |
-          ssh -o StrictHostKeyChecking=no \
-              ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} << 'EOF'
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/python-app:latest .
 
-          set -e
-          echo "Connected to VM"
-
-          APP_DIR="$HOME/webapp"
-          REPO_URL="https://github.com//nidheeshnle/python-app.git"
-
-          if [ ! -d "$APP_DIR/.git" ]; then
-              echo "Repository not found. Cloning..."
-              git clone $REPO_URL $APP_DIR
-          else
-              echo "Repository found. Pulling latest changes..."
-              cd $APP_DIR
-              git pull origin main
-          fi
-
-          cd $APP_DIR
-
-          echo "Stopping existing containers..."
-          docker-compose down || true
-
-          echo "Building images..."
-          docker-compose build
-
-          echo "Starting containers..."
-          docker-compose up -d
-
-          echo "Deployment completed successfully"
-          EOF
-
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/python-app:latest
