@@ -16,12 +16,8 @@ jobs:
           echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: SSH into VM and run ls
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USER }}
-          script: |
-            echo "Connected to VM"
-            pwd
-            ls -la
+       - name: SSH into VM and run ls
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+              ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
+              "echo 'Connected to VM'; pwd; ls -la"
