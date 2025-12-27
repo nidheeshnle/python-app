@@ -1,4 +1,4 @@
-name: SSH Test Workflow
+name: Deploy Web App via SSH
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  ssh-test:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -16,21 +16,30 @@ jobs:
           echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: SSH into VM and run ls
+      - name: Deploy application on VM
         run: |
           ssh -o StrictHostKeyChecking=no \
-              ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
-              "echo 'Connected to VM'; pwd; ls -la"
+              ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} << 'EOF'
+
           set -e
           echo "Connected to VM"
 
-          cd ~/webapp
+          APP_DIR="$HOME/webapp"
+          REPO_URL="https://github.com/<YOUR_GITHUB_USERNAME>/<YOUR_REPO_NAME>.git"
 
-          echo "Pulling latest code..."
-          git pull origin main
+          if [ ! -d "$APP_DIR/.git" ]; then
+              echo "Repository not found. Cloning..."
+              git clone $REPO_URL $APP_DIR
+          else
+              echo "Repository found. Pulling latest changes..."
+              cd $APP_DIR
+              git pull origin main
+          fi
+
+          cd $APP_DIR
 
           echo "Stopping existing containers..."
-          docker-compose down
+          docker-compose down || true
 
           echo "Building images..."
           docker-compose build
@@ -40,3 +49,4 @@ jobs:
 
           echo "Deployment completed successfully"
           EOF
+
