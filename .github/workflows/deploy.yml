@@ -16,7 +16,7 @@ jobs:
           echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-       - name: SSH into VM and run ls
+      - name: SSH into VM and run ls
         run: |
           ssh -o StrictHostKeyChecking=no \
               ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} \
